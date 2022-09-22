@@ -29,7 +29,32 @@
         <el-input v-model="teacher.intro" :rows="10" type="textarea"/>
       </el-form-item>
 
-      <!-- 讲师头像：TODO -->
+      <!-- 讲师头像 -->
+      <el-form-item label="讲师头像">
+        <!-- 头衔缩略图 -->
+        <pan-thumb :image="teacher.avatar"/>
+        <!-- 文件上传按钮 -->
+        <el-button type="primary" icon="el-icon-upload"
+                   @click="imagecropperShow=true">更换头像
+        </el-button>
+        <!--
+        v-show：是否显示上传组件
+        :key：类似于id，如果一个页面多个图片上传控件，可以做区分
+        :url：后台上传的url地址
+        @close：关闭上传组件
+        @crop-upload-success：上传成功后的回调 -->
+        <image-cropper
+               v-show="imagecropperShow"
+              :width="300"
+              :height="300"
+              :key="imagecropperKey"
+              :url="BASE_API+'/eduoss/fileoss'"
+              field="file"
+              @close="close"
+              @crop-upload-success="cropSuccess"/>
+      </el-form-item>
+
+
       <el-form-item>
         <el-button :disabled="saveBtnDisabled" type="primary" @click="saveOrUpdate">保存</el-button>
       </el-form-item>
@@ -42,8 +67,13 @@
 
 //引用teacher.js文件
 import teacherApi from '@/api/edu/teacher'
+//引入头像上传的两个组件
+import ImageCropper from '@/components/ImageCropper'
+import PanThumb from '@/components/PanThumb'
 
 export default {
+  //声明头像上传的两个组件
+  components: { ImageCropper, PanThumb },
   data() {
     return {
       teacher: {
@@ -54,6 +84,14 @@ export default {
         intro: '',
         avatar: ''
       },
+
+      //上传弹框是否显示
+      imagecropperShow: false,
+      //上传组件key值
+      imagecropperKey: 0,
+      //获取dev.env.js里面的地址
+      BASE_API: process.env.BASE_API,
+
       saveBtnDisabled: false // 保存按钮是否禁用,
     }
   },
@@ -68,6 +106,21 @@ export default {
     }
   },
   methods: {
+    //头像上传关闭方法
+    close(){
+      //关闭上传弹框的方法
+      this.imagecropperShow=false
+      //上传组件初始化
+      this.imagecropperKey = this.imagecropperKey+1
+    },
+    //头像上传成功后方法
+    cropSuccess(data){
+      this.imagecropperShow=false
+      //上传之后返回图片地址
+      this.teacher.avatar = data.url
+      //上传组件初始化
+      this.imagecropperKey = this.imagecropperKey+1
+    },
     init(){
       //判断路径有id值，做修改
       if (this.$route.params && this.$route.params.id){
